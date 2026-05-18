@@ -27,32 +27,39 @@ export default function HomePage() {
       <section
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 24,
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: 22,
           marginBottom: 56,
         }}
       >
         <Tile
           icon={<HeartToken size={64} />}
-          title="Play a match"
-          body="Hot-seat hand-off play. Pass the device between roles each phase. 4 Hearts to win, 3 Rumours to lose."
-          href="/play"
-          cta="Enter the court →"
+          title="Host a match"
+          body="Open a room and get a four-letter code. Share it. Your partner joins from their own device. Hidden information stays hidden."
+          href="/host"
+          cta="Open a room →"
           primary
         />
         <Tile
           icon={<QuestionToken size={64} />}
-          title="Browse the design"
-          body="Every asset, palette token, signal, obstacle, portrait, route, and card on one page."
-          href="/library"
-          cta="Open the library →"
+          title="Join with code"
+          body="A friend has invited you. Enter their four-letter code to enter the court."
+          href="/join"
+          cta="Enter a code →"
         />
         <Tile
           icon={<RumourToken size={64} />}
-          title="How it works"
-          body="Three-phase round: Confidant places signals and plays cards. Suitor chooses tone, asks one question, sends the letter. Resolution reveals the Rival."
+          title="Hot-seat (single device)"
+          body="Two players on one screen. Pass the device each phase. Works offline; useful for quick demos."
           href="/play"
-          cta="Read by playing →"
+          cta="Hand the device →"
+        />
+        <Tile
+          icon={<HeartToken size={64} active={false} />}
+          title="Browse the design"
+          body="Every palette token, signal, obstacle, portrait, route, and card on one page."
+          href="/library"
+          cta="Open the library →"
         />
       </section>
 

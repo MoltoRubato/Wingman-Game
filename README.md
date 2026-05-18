@@ -4,72 +4,161 @@ A two-player cooperative web game of love, rivalry, and indirect communication. 
 
 Court Silence is in force.
 
-## Run it
+---
+
+## Quick start (5 minutes, two browsers)
+
+You need: **Node 18+**, **Docker** (running), and **Homebrew** (macOS).
 
 ```bash
+# 1. Install the Supabase CLI
+brew install supabase/tap/supabase
+
+# 2. Install Node deps
 npm install
-npm run dev        # http://localhost:3000
+
+# 3. Boot the local Supabase stack (Postgres + Realtime + REST), apply migrations
+supabase start
+supabase db reset                # runs supabase/migrations/0001_init.sql
+
+# 4. Write the local Supabase URL + keys into .env.local
+supabase status -o env | awk -F= '
+  /^API_URL=/         { print "NEXT_PUBLIC_SUPABASE_URL=" $2 }
+  /^ANON_KEY=/        { print "NEXT_PUBLIC_SUPABASE_ANON_KEY=" $2 }
+  /^SERVICE_ROLE_KEY=/{ print "SUPABASE_SERVICE_ROLE_KEY=" $2 }
+' | tr -d '"' > .env.local
+
+# 5. Run the Next.js dev server
+npm run dev                      # http://localhost:3000
 ```
 
-## What's here
+### Play a real 2-device match
 
-- **`/`** — landing page with role/signal vocabulary and a link to play.
-- **`/library`** — asset library: every palette token, signal, obstacle, route panorama, portrait, card frame, and the 24 card illustrations.
-- **`/play`** — full hot-seat match. Multi-round game loop, role rotation between Suitor and Confidant, end-of-match narrative based on Hearts/Rumours earned.
+1. **Player A** opens [http://localhost:3000](http://localhost:3000) → **Host a match** → clicks **Create room →**. They land on the lobby with a 4-letter code (e.g. `NRX5`).
+2. **Player B** opens the same URL in a **second browser** (or an Incognito window — separate sessions need separate `localStorage`). Clicks **Join with code**, types the 4-letter code → **Enter the room →**.
+3. The game starts as soon as the second player joins. Each browser sees only its role:
+   - **Slot 1** is the Suitor (first round). They see a "your Confidant is choosing in silence" splash.
+   - **Slot 2** is the Confidant. They see the three private clues, their hand of 5 cards, the route obstacles. They place ≤3 signals and play cards (3 AP). When they click **Hand the device to the Suitor →**, the Suitor's screen advances automatically via Realtime.
+4. From there the round walks through Tone → Question (or skip) → Answer → Route → Resolution. Roles rotate after each round. **First to 4 Hearts wins; 3 Rumours loses.**
 
-### Stack
-- Next.js 15 (App Router) + TypeScript + React 19
-- Zod for schema validation (`lib/game/schema.ts`)
-- Vitest for resolver tests
-- Howler.js wired but no audio files shipped (only the manifest under `public/audio/`)
-- No Tailwind — design uses the bundle's `tokens.css` + `prototype.css` merged into `app/globals.css`.
+If you only have one device, the **Hot-seat** mode at `/play` works without Supabase at all (single device, pass-the-device handoff splashes between phases).
 
-### Code layout
+---
+
+## Testing the hidden-info boundary
+
+This is the security-critical bit. With the dev server running:
+
+```bash
+# Create a room as Player A
+SID_A=$(uuidgen | tr 'A-Z' 'a-z')
+SID_B=$(uuidgen | tr 'A-Z' 'a-z')
+CODE=$(curl -s -X POST http://localhost:3000/api/rooms/create \
+  -H content-type:application/json \
+  -d "{\"sessionId\":\"$SID_A\"}" | jq -r .code)
+
+# B joins → game starts
+curl -s -X POST http://localhost:3000/api/rooms/join \
+  -H content-type:application/json \
+  -d "{\"sessionId\":\"$SID_B\",\"code\":\"$CODE\"}"
+
+# Fetch the Suitor's view
+curl -s "http://localhost:3000/api/rooms/$CODE/state?sid=$SID_A" | jq '.round | keys'
+# → should NOT include "clues", "confidant_hand", "rival_route", "rival_trait"
+# → SHOULD include "suitor_hand"
+
+# Fetch the Confidant's view
+curl -s "http://localhost:3000/api/rooms/$CODE/state?sid=$SID_B" | jq '.round | keys'
+# → SHOULD include "clues", "confidant_hand", "rival_route", "rival_trait"
+```
+
+The redaction is enforced server-side by the `get_room_view` Postgres function (see `supabase/migrations/0001_init.sql`). RLS denies direct table SELECT to all roles, so even with the anon key in DevTools, a Suitor cannot read the Confidant's data.
+
+---
+
+## What's where
 
 ```
-lib/game/
-  content.ts         canonical game data (routes, obstacles, recipients, tones, cards, traits, clue templates)
-  resolution.ts      pure resolver — implements rules R1–R15 from the build plan
-  schema.ts          Zod schemas for all RPC / RoundSnapshot boundaries
-  createRound.ts     seeded round generator (port of engine.js)
+lib/game/                  canonical engine (unchanged from the design bundle)
+  content.ts               routes, obstacles, recipients, tones, 12 Confidant cards, 6 Suitor cards, 6 Rival traits
+  resolution.ts            pure resolver — rules R1–R15
+  schema.ts                Zod schemas
+  createRound.ts           seeded round generator
 
-components/svg/      all SVG painterly assets (filters, signals, obstacles, portraits, routes, frames, card-art, ui-tokens)
+lib/server/game.ts         server-side game logic — room creation, joins, phase transitions, resolution write-back
+lib/supabase/server.ts     service-role Supabase client (server only)
+lib/supabase/client.ts     anon Supabase client (browser, used for Realtime subscriptions)
+lib/hooks/useRoomView.ts   client hook — subscribes to Realtime + refetches the room view on change
+lib/session.ts             anonymous localStorage UUID
+
+components/svg/            all SVG painterly assets (filters, signals, obstacles, portraits, routes, frames, 24 card illustrations, UI tokens)
 
 app/
-  layout.tsx         mounts <PaintFilters/>, fonts, globals.css
-  page.tsx           landing
-  library/page.tsx   asset library
-  play/
-    page.tsx         match shell with menu / round / interround / gameover phases
-    _views/          ConfidantView, SuitorView, ResolutionView, Round, HandoffSplash, InterroundView, GameOverView
+  page.tsx                 landing — host, join, hot-seat, library
+  layout.tsx               mounts <PaintFilters/>, fonts, globals.css
+  globals.css              merged tokens + prototype CSS from the bundle
+  host/page.tsx            create a room
+  join/page.tsx            enter a code
+  room/[code]/page.tsx     live match shell — gates views by role, fires actions
+  room/[code]/_views/      Lobby, WaitingFor, ConfidantStep, SuitorStep, ResolutionStep, GameOverStep, adapt.ts
+  play/                    hot-seat (single device) game shell
+  library/page.tsx         asset catalogue
+  api/rooms/create         POST — { sessionId } → { code }
+  api/rooms/join           POST — { sessionId, code } → { ok, slot }
+  api/rooms/[code]/state   GET  — ?sid=… → role-redacted RoomView
+  api/rooms/[code]/action  POST — { sessionId, action } → { ok }
 
-tests/resolution.test.ts   22 tests covering blocking obstacles, TT/LP math, R15 tone tiebreakers, traits, support cards
+supabase/
+  config.toml              CLI config
+  migrations/0001_init.sql tables (rooms, players, games, rounds) + RLS + get_room_view RPC
 
-public/
-  writing/content.json     clue templates, recipient bios, narrative beats, tutorial copy
-  audio/manifest.json      12 cue specs (files not included)
+tests/resolution.test.ts   22 Vitest cases covering rules R1–R15
+
+public/writing/content.json   clue templates, recipient bios, narrative beats
+public/audio/manifest.json    12 audio cue specs (files not bundled — Howler is wired but optional)
 ```
+
+---
 
 ## Rules (canonical)
 
-See `lib/game/resolution.ts` for the authoritative resolution order. Highlights:
-
 - **Confidant economy**: 3 AP per round. Most cards cost 1 AP; Misdirect Messenger and Cover Story cost 2.
-- **Communication**: 3 signal placements drawn from 6 signal types (Heart, Thorn, Eye, Clock, Mask, Key) — placed on a route, the Tone, or the Intention. Plus exactly one Question Token answered with Trust / Danger / Unsure.
-- **Resolution order**: blocking obstacles → travel time → letter power → tone tiebreaker. Sealed Promise overrides any tiebreak. Cover Story converts a single Rumour to nothing.
-- **Win**: 4 Hearts. **Loss**: 3 Rumours.
+- **Communication**: 3 signal placements drawn from 6 signal types (Heart, Thorn, Eye, Clock, Mask, Key) — placed on a route, the Tone, or the Intention. Plus one Question Token answered with Trust / Danger / Unsure.
+- **Resolution order**: blocking obstacles → travel time → letter power → tone tiebreaker. Sealed Promise wins any tied LP. Cover Story converts a single Rumour to nothing.
+- **Win**: 4 Hearts. **Loss**: 3 Rumours. Roles rotate every round.
 
-## What's not built yet
+See [lib/game/resolution.ts](lib/game/resolution.ts) for the authoritative resolver.
 
-This is the **single-device hot-seat** port. Two players pass the device between roles each phase, as in the original prototype bundle. The plan also includes a full **2-device Supabase + Realtime** layer (rooms via 4-char code, server-authoritative phase machine, RLS-redacted hidden info). That's not in this commit — the schema and view code are designed to make it a clean upgrade rather than a rewrite.
+---
 
-## Verification
+## Deploy
+
+The app deploys cleanly to **Vercel**. Two env vars on Vercel:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (server-only)
+
+Point those at a **hosted Supabase project** instead of local. Run the migration:
+
+```bash
+supabase link --project-ref <your-project-ref>
+supabase db push
+```
+
+That's it. No other infra needed.
+
+---
+
+## Verify
 
 ```bash
 npm run test          # 22 resolver tests
 npm run typecheck     # tsc --noEmit
-npm run build         # next build (static, prerenders all 4 routes)
+npm run build         # next build
 ```
+
+---
 
 ## Credits
 
