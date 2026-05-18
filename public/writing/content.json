@@ -1,0 +1,134 @@
+{
+  "_comment": "Writing assets per build plan §9.10. Variables {route}, {obstacle}, {trait}, {tone}, {recipient}, {power_descriptor} are filled at round-gen time.",
+
+  "clueTemplates": {
+    "rival": [
+      "The Rival is not using the {route}.",
+      "The Rival favours routes with {obstacle}.",
+      "The Rival is a {trait}.",
+      "The Rival's letter feels {power_descriptor}.",
+      "The Rival was seen near the {route} earlier."
+    ],
+    "obstacle": [
+      "The {route} hides a {obstacle}.",
+      "One of the routes contains {obstacle}, but I cannot tell which.",
+      "No {obstacle} on the {route}.",
+      "The {route} is unusually quiet — perhaps too quiet.",
+      "Take care near the {route}."
+    ],
+    "preference": [
+      "{recipient} prefers {tone} letters this evening.",
+      "{recipient} will not welcome a {tone} approach today.",
+      "{recipient}'s mood is uncertain.",
+      "The court is whispering that {recipient} has been reading {tone} verses.",
+      "{recipient} has had a long day; favour {tone} above all."
+    ]
+  },
+
+  "powerDescriptors": [
+    { "atOrBelow": 3, "word": "feeble" },
+    { "atOrBelow": 4, "word": "measured" },
+    { "atOrBelow": 5, "word": "earnest" },
+    { "atOrBelow": 6, "word": "forceful" },
+    { "atOrBelow": 99,"word": "thunderous" }
+  ],
+
+  "recipients": {
+    "celeste": {
+      "name": "Lady Celeste",
+      "bio":  "Reads three books a night and forgives nothing said in haste.",
+      "salutation": "Honoured Lady,"
+    },
+    "aureon": {
+      "name": "Lord Aureon",
+      "bio":  "Wins duels he does not mean to fight. Loves anyone who can keep up.",
+      "salutation": "My Lord,"
+    },
+    "mira": {
+      "name": "Mira the Poet",
+      "bio":  "Believes a kept silence is a love letter in itself.",
+      "salutation": "Dear Mira,"
+    },
+    "heir": {
+      "name": "The Masked Heir",
+      "bio":  "Half the court has loved them. None has met them twice.",
+      "salutation": "To the one behind the mask —"
+    }
+  },
+
+  "intentions": [
+    { "key": "Apology",        "openings": ["Forgive me. I should never have —", "I write because I cannot let yesterday stand."] },
+    { "key": "Confession",     "openings": ["You should hear it from me, before the court does —", "It is past time I admitted —"] },
+    { "key": "Invitation",     "openings": ["The west balcony, at the third bell —", "Come to the gallery tonight, before the others."] },
+    { "key": "Reconciliation", "openings": ["Whatever was said, was said too quickly.", "I miss the way you laugh when no one is watching."] }
+  ],
+
+  "narrativeBeats": {
+    "hearts": [
+      { "at": 1, "text": "The first letter arrives. The recipient smiles, alone, in a corner of the gallery." },
+      { "at": 2, "text": "A ribbon is returned with no message. It is the answer." },
+      { "at": 3, "text": "Word travels through the kitchens — quietly, fondly — that the Suitor is not what the court assumed." },
+      { "at": 4, "text": "At the masquerade, the recipient leaves the dance to find them. The court understands. The court approves." }
+    ],
+    "rumours": [
+      { "at": 1, "text": "A fan opens. A name is mouthed behind it." },
+      { "at": 2, "text": "Two letters arrive at the wrong addresses. Both are read aloud." },
+      { "at": 3, "text": "By morning, the affair is in three languages and none of them is true." }
+    ],
+    "endings": {
+      "won":  "The recipient meets them at the lower gate. No letter is opened. No letter needs to be.",
+      "lost": "The Rival walks out of the ballroom holding a hand the Suitor never reached."
+    }
+  },
+
+  "tutorialPrompts": [
+    { "step": 1, "audience": "both",
+      "title":"You are not playing alone.",
+      "body": "Two roles take turns each round: the SUITOR writes the letter and chooses a route; the CONFIDANT sees the truth of the court and helps in silence. You will rotate." },
+    { "step": 2, "audience": "confidant",
+      "title":"You see what they do not.",
+      "body": "Three private clues this round — about the Rival, the obstacles, and the recipient's mood. Read them carefully. You will not be able to speak any of them aloud." },
+    { "step": 3, "audience": "confidant",
+      "title":"Signals are your only voice.",
+      "body": "Place three signal tokens on routes (or on tone / intention) using the six symbols. Choose what each symbol MEANS — the Suitor will guess." },
+    { "step": 4, "audience": "confidant",
+      "title":"You also have Action Points.",
+      "body": "Three AP this round. Cards cost 1 or 2 AP. They cancel obstacles, slow the Rival, or strengthen the letter. Pick a small plan." },
+    { "step": 5, "audience": "suitor",
+      "title":"Look at the signals first.",
+      "body": "Your Confidant has placed three of them. You won't get to ask much. Read them like a hand of cards." },
+    { "step": 6, "audience": "suitor",
+      "title":"Choose your TONE next.",
+      "body": "Tender · Bold · Honest · Playful. Each shifts speed and persuasion. Each works only on the right recipient." },
+    { "step": 7, "audience": "suitor",
+      "title":"You have ONE question.",
+      "body": "Point to a route and ask. Your Confidant answers with one word — Trust, Danger, or Unsure. That is your only direct exchange." },
+    { "step": 8, "audience": "suitor",
+      "title":"Then choose your route, and send the letter.",
+      "body": "Travel time and letter power are compared against the Rival's. Win to gain a Heart; lose to gain a Rumour." },
+    { "step": 9, "audience": "both",
+      "title":"Four Hearts to win. Three Rumours and you are exposed.",
+      "body": "Roles rotate every round. Whoever you are now, you will not be next round." },
+    { "step": 10,"audience": "both",
+      "title":"Court Silence is enforced by the design, not the rules.",
+      "body": "There is no chat. There is no voice. Resist whispering across the table. The pleasure of this game is in being almost-understood." }
+  ],
+
+  "questionAnswerLabels": {
+    "Trust":  "Take this path. I would.",
+    "Danger": "Not this one. Reconsider.",
+    "Unsure": "I cannot tell. Choose with care."
+  },
+
+  "phaseLabels": {
+    "lobby":            "Waiting for the second player",
+    "setup":            "The round is being prepared",
+    "tone_choice":      "The Suitor chooses the tone",
+    "confidant_phase":  "The Confidant moves in silence",
+    "question_phase":   "One question only",
+    "route_choice":     "The Suitor sends the letter",
+    "resolution":       "Two letters cross the palace",
+    "interround":       "The court turns the page",
+    "gameover":         "The court has decided"
+  }
+}
