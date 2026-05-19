@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import type { RouteKey } from "@/lib/game/content";
+import { routeAssetUrl } from "@/lib/art/manifest";
 
 export type RouteProps = { w?: number; h?: number };
 type BaseProps = RouteProps & { children?: ReactNode };
@@ -201,10 +202,25 @@ export const RouteCorridor = (p: RouteProps) => (
   </RouteBase>
 );
 
+const withAIRoute = (key: RouteKey, SvgFallback: ComponentType<RouteProps>): ComponentType<RouteProps> => {
+  const Wrapped = ({ w = 768, h = 384 }: RouteProps) => {
+    const ai = routeAssetUrl(key);
+    if (!ai) return <SvgFallback w={w} h={h} />;
+    return (
+      <svg viewBox="0 0 1536 768" width={w} height={h} style={{ display: "block" }} preserveAspectRatio="xMidYMid slice">
+        <image href={ai} x="0" y="0" width="1536" height="768" preserveAspectRatio="xMidYMid slice" />
+        <rect width="1536" height="768" fill="url(#candle-vignette)" opacity="0.45" />
+      </svg>
+    );
+  };
+  Wrapped.displayName = `Route_${key}`;
+  return Wrapped;
+};
+
 export const ROUTE_COMPONENTS: Record<RouteKey, ComponentType<RouteProps>> = {
-  garden:   RouteGarden,
-  gallery:  RouteGallery,
-  corridor: RouteCorridor,
+  garden:   withAIRoute("garden",   RouteGarden),
+  gallery:  withAIRoute("gallery",  RouteGallery),
+  corridor: withAIRoute("corridor", RouteCorridor),
 };
 
 export const ROUTE_META: Record<RouteKey, { label: string; baseTime: number; mood: string }> = {

@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import { portraitAssetUrl } from "@/lib/art/manifest";
 
 export type PortraitKey = "suitor" | "confidant" | "rival" | "celeste" | "aureon" | "mira" | "heir";
 
@@ -396,12 +397,46 @@ export const PortraitHeir = (props: PortraitProps) => (
   </PortraitFrame>
 );
 
+type FrameConfig = { label: string; bg: string };
+
+const PORTRAIT_FRAME: Record<PortraitKey, FrameConfig> = {
+  suitor:    { label: "The Suitor",      bg: "burgundy-vignette" },
+  confidant: { label: "The Confidant",   bg: "plum-vignette" },
+  rival:     { label: "The Rival",       bg: "teal-vignette" },
+  celeste:   { label: "Lady Celeste",    bg: "teal-vignette" },
+  aureon:    { label: "Lord Aureon",     bg: "burgundy-vignette" },
+  mira:      { label: "Mira the Poet",   bg: "plum-vignette" },
+  heir:      { label: "The Masked Heir", bg: "plum-vignette" },
+};
+
+const withAIArt = (key: PortraitKey, SvgFallback: ComponentType<PortraitProps>): ComponentType<PortraitProps> => {
+  const Wrapped = (props: PortraitProps) => {
+    const ai = portraitAssetUrl(key);
+    if (!ai) return <SvgFallback {...props} />;
+    const { label, bg } = PORTRAIT_FRAME[key];
+    return (
+      <PortraitFrame label={label} bgGradient={bg} {...props}>
+        <image
+          href={ai}
+          x="18"
+          y="18"
+          width="364"
+          height="464"
+          preserveAspectRatio="xMidYMid slice"
+        />
+      </PortraitFrame>
+    );
+  };
+  Wrapped.displayName = `Portrait_${key}`;
+  return Wrapped;
+};
+
 export const PORTRAITS: Record<PortraitKey, ComponentType<PortraitProps>> = {
-  suitor: PortraitSuitor,
-  confidant: PortraitConfidant,
-  rival: PortraitRival,
-  celeste: PortraitCeleste,
-  aureon: PortraitAureon,
-  mira: PortraitMira,
-  heir: PortraitHeir,
+  suitor:    withAIArt("suitor",    PortraitSuitor),
+  confidant: withAIArt("confidant", PortraitConfidant),
+  rival:     withAIArt("rival",     PortraitRival),
+  celeste:   withAIArt("celeste",   PortraitCeleste),
+  aureon:    withAIArt("aureon",    PortraitAureon),
+  mira:      withAIArt("mira",      PortraitMira),
+  heir:      withAIArt("heir",      PortraitHeir),
 };

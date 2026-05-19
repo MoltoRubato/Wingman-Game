@@ -1,6 +1,35 @@
 import type { ComponentType, ReactNode } from "react";
+import { cardAssetUrl } from "@/lib/art/manifest";
 
 type ArtBGProps = { gradient?: string; children?: ReactNode };
+
+/**
+ * Drop a PNG into `public/art/cards/<key>.png` and flip `enabled: true`
+ * in `lib/art/manifest.ts` to replace the programmatic SVG art for that card.
+ * The card art slot is 600×500 (6:5).
+ */
+const withAICardArt = (key: string, SvgFallback: ComponentType): ComponentType => {
+  const Wrapped = () => {
+    const ai = cardAssetUrl(key);
+    if (!ai) return <SvgFallback />;
+    return (
+      <g>
+        <rect x="0" y="0" width="600" height="500" fill="url(#candle-vignette)" />
+        <image
+          href={ai}
+          x="0"
+          y="0"
+          width="600"
+          height="500"
+          preserveAspectRatio="xMidYMid slice"
+        />
+        <rect x="0" y="0" width="600" height="500" fill="url(#candle-vignette)" opacity="0.35" />
+      </g>
+    );
+  };
+  Wrapped.displayName = `CardArt_${key}`;
+  return Wrapped;
+};
 
 /**
  * CARD CENTER ILLUSTRATIONS — 24 total.
@@ -732,32 +761,32 @@ export const Art_JealousRival = () => (
 
 export const CARD_ART: Record<string, ComponentType> = {
   /* Confidant */
-  trace_footsteps: Art_TraceFootsteps,
-  read_the_seal: Art_ReadTheSeal,
-  distract_guard: Art_DistractGuard,
-  clear_gossip: Art_ClearGossip,
-  find_key: Art_FindKey,
-  safe_passage: Art_SafePassage,
-  delay_rival: Art_DelayRival,
-  misdirect_messenger: Art_MisdirectMessenger,
-  encouraging_note: Art_EncouragingNote,
-  secret_map: Art_SecretMap,
-  correct_address: Art_CorrectAddress,
-  cover_story: Art_CoverStory,
+  trace_footsteps:     withAICardArt("trace_footsteps",     Art_TraceFootsteps),
+  read_the_seal:       withAICardArt("read_the_seal",       Art_ReadTheSeal),
+  distract_guard:      withAICardArt("distract_guard",      Art_DistractGuard),
+  clear_gossip:        withAICardArt("clear_gossip",        Art_ClearGossip),
+  find_key:            withAICardArt("find_key",            Art_FindKey),
+  safe_passage:        withAICardArt("safe_passage",        Art_SafePassage),
+  delay_rival:         withAICardArt("delay_rival",         Art_DelayRival),
+  misdirect_messenger: withAICardArt("misdirect_messenger", Art_MisdirectMessenger),
+  encouraging_note:    withAICardArt("encouraging_note",    Art_EncouragingNote),
+  secret_map:          withAICardArt("secret_map",          Art_SecretMap),
+  correct_address:     withAICardArt("correct_address",     Art_CorrectAddress),
+  cover_story:         withAICardArt("cover_story",         Art_CoverStory),
   /* Suitor */
-  brave_shortcut: Art_BraveShortcut,
-  careful_rewrite: Art_CarefulRewrite,
-  sealed_promise: Art_SealedPromise,
-  second_thoughts: Art_SecondThoughts,
-  direct_confession: Art_DirectConfession,
-  wait_right_moment: Art_WaitForRightMoment,
+  brave_shortcut:    withAICardArt("brave_shortcut",    Art_BraveShortcut),
+  careful_rewrite:   withAICardArt("careful_rewrite",   Art_CarefulRewrite),
+  sealed_promise:    withAICardArt("sealed_promise",    Art_SealedPromise),
+  second_thoughts:   withAICardArt("second_thoughts",   Art_SecondThoughts),
+  direct_confession: withAICardArt("direct_confession", Art_DirectConfession),
+  wait_right_moment: withAICardArt("wait_right_moment", Art_WaitForRightMoment),
   /* Rival */
-  fast_courier: Art_FastCourier,
-  silver_tongue: Art_SilverTongue,
-  court_favourite: Art_CourtFavourite,
-  hidden_seal: Art_HiddenSeal,
-  false_trail: Art_FalseTrail,
-  jealous_rival: Art_JealousRival,
+  fast_courier:    withAICardArt("fast_courier",    Art_FastCourier),
+  silver_tongue:   withAICardArt("silver_tongue",   Art_SilverTongue),
+  court_favourite: withAICardArt("court_favourite", Art_CourtFavourite),
+  hidden_seal:     withAICardArt("hidden_seal",     Art_HiddenSeal),
+  false_trail:     withAICardArt("false_trail",     Art_FalseTrail),
+  jealous_rival:   withAICardArt("jealous_rival",   Art_JealousRival),
 };
 
 // CARD_ART exported above
