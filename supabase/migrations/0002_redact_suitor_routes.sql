@@ -1,0 +1,2 @@
+-- Superseded by 0003_simplified_rules.sql.
+-- Kept as an empty migration slot so older local histories do not need to be renumbered.

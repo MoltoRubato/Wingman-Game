@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { HEARTS_TO_WIN, RUMOURS_TO_LOSE, RECIPIENTS, type RecipientKey } from "@/lib/game/content";
+import { HEARTS_TO_WIN, RUMOURS_TO_LOSE } from "@/lib/game/content";
 import type { RoundResult } from "@/lib/game/resolution";
 import { Round } from "./_views/Round";
 import { InterroundView } from "./_views/InterroundView";
 import { GameOverView } from "./_views/GameOverView";
-import { PORTRAITS } from "@/components/svg/portraits";
 import { TitleLogo, HeartToken, RumourToken } from "@/components/svg/ui-tokens";
+import { SIGNAL_COMPONENTS, SIGNAL_META } from "@/components/svg/signals";
 import Link from "next/link";
 
 type GamePhase = "menu" | "round" | "interround" | "gameover";
@@ -16,7 +16,7 @@ type PlayState = {
   hearts: number;
   rumours: number;
   roundNumber: number;
-  lastOutcome: "success" | "fail" | "fail_blocking" | null;
+  lastOutcome: "success" | "fail" | null;
 };
 
 const INITIAL: PlayState = { hearts: 0, rumours: 0, roundNumber: 1, lastOutcome: null };
@@ -24,12 +24,10 @@ const INITIAL: PlayState = { hearts: 0, rumours: 0, roundNumber: 1, lastOutcome:
 export default function PlayPage() {
   const [phase, setPhase] = useState<GamePhase>("menu");
   const [state, setState] = useState<PlayState>(INITIAL);
-  const [pickedRecipient, setPickedRecipient] = useState<RecipientKey | undefined>();
   const [resetKey, setResetKey] = useState(0);
 
-  const startGame = (recipient?: RecipientKey) => {
+  const startGame = () => {
     setState(INITIAL);
-    setPickedRecipient(recipient);
     setPhase("round");
     setResetKey((k) => k + 1);
   };
@@ -61,7 +59,6 @@ export default function PlayPage() {
         <Banner hearts={state.hearts} rumours={state.rumours} round={state.roundNumber} />
         <Round
           key={`round-${resetKey}-${state.roundNumber}`}
-          initialRecipient={pickedRecipient}
           hearts={state.hearts}
           rumours={state.rumours}
           roundNumber={state.roundNumber}
@@ -79,10 +76,7 @@ export default function PlayPage() {
         rumours={state.rumours}
         lastOutcome={state.lastOutcome}
         nextRoundNumber={state.roundNumber}
-        onContinue={() => {
-          setPickedRecipient(undefined); // randomise next round
-          setPhase("round");
-        }}
+        onContinue={() => setPhase("round")}
         onExit={() => setPhase("menu")}
       />
     );
@@ -94,7 +88,7 @@ export default function PlayPage() {
         won={state.hearts >= HEARTS_TO_WIN}
         hearts={state.hearts}
         rumours={state.rumours}
-        onPlayAgain={() => startGame()}
+        onPlayAgain={startGame}
         onExit={() => {
           setState(INITIAL);
           setPhase("menu");
@@ -137,58 +131,30 @@ const Banner = ({ hearts, rumours, round }: { hearts: number; rumours: number; r
   </div>
 );
 
-const Menu = ({ onStart }: { onStart: (r?: RecipientKey) => void }) => (
+const Menu = ({ onStart }: { onStart: () => void }) => (
   <div className="splash">
-    <div className="splash-inner" style={{ maxWidth: 980 }}>
+    <div className="splash-inner" style={{ maxWidth: 900 }}>
       <TitleLogo width={520} />
-      <p
-        className="splash-prose"
-        style={{ textAlign: "center", margin: "16px auto 28px", maxWidth: 640 }}
-      >
-        A two-player cooperative game of love, rivalry, and indirect communication.
-        Hot-seat hand-off play. Reach <strong>{HEARTS_TO_WIN} Hearts</strong> before <strong>{RUMOURS_TO_LOSE} Rumours</strong>.
+      <p className="splash-prose" style={{ textAlign: "center", margin: "16px auto 28px", maxWidth: 680 }}>
+        A two-player game of hidden truth and symbolic trust. The Confidant places exactly two signals.
+        The Suitor chooses one route and one tone. First to <strong>{HEARTS_TO_WIN} Hearts</strong> wins.
       </p>
-
-      <div className="eyebrow" style={{ textAlign: "center", marginBottom: 12 }}>
-        Choose tonight&apos;s first recipient (or let the court decide)
+      <div className="rule-glossary" style={{ margin: "0 auto 28px", maxWidth: 620 }}>
+        {(Object.entries(SIGNAL_COMPONENTS) as [keyof typeof SIGNAL_COMPONENTS, (typeof SIGNAL_COMPONENTS)[keyof typeof SIGNAL_COMPONENTS]][]).map(([key, Sig]) => (
+          <div key={key} className="gloss-row">
+            <Sig size={44} />
+            <div>
+              <div className="gloss-name">{SIGNAL_META[key].label}</div>
+              <div className="gloss-hint">{SIGNAL_META[key].hint}</div>
+            </div>
+          </div>
+        ))}
       </div>
-      <div className="asset-grid asset-grid--portraits" style={{ marginTop: 8 }}>
-        {(Object.keys(RECIPIENTS) as RecipientKey[]).map((k) => {
-          const r = RECIPIENTS[k];
-          const P = PORTRAITS[k];
-          return (
-            <button
-              key={k}
-              onClick={() => onStart(k)}
-              className="asset-card"
-              style={{
-                background: "rgba(43,19,46,0.3)",
-                cursor: "pointer",
-                border: "1px solid rgba(201,196,212,0.2)",
-              }}
-            >
-              <P w={240} h={300} />
-              <div className="name">{r.name}</div>
-              <div className="desc" style={{ minHeight: 40 }}>&quot;{r.bio}&quot;</div>
-              <div
-                style={{
-                  fontSize: 11,
-                  letterSpacing: "0.1em",
-                  color: "var(--gold-bright)",
-                  marginTop: 4,
-                }}
-              >
-                Likes {r.likes.join(", ").toUpperCase()}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      <div className="splash-controls" style={{ marginTop: 32, gap: 16 }}>
-        <Link href="/" className="btn btn-ghost">← Home</Link>
-        <Link href="/library" className="btn btn-ghost">Asset library</Link>
-        <button className="btn btn-primary" onClick={() => onStart()}>
-          The court chooses → Begin
+      <div className="splash-controls" style={{ marginTop: 24, gap: 16 }}>
+        <Link href="/" className="btn btn-ghost">Home</Link>
+        <Link href="/rules" className="btn btn-ghost">Rules</Link>
+        <button className="btn btn-primary" onClick={onStart} type="button">
+          Begin hot-seat match
         </button>
       </div>
     </div>

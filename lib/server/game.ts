@@ -5,21 +5,19 @@
 
 import { serverClient } from "@/lib/supabase/server";
 import { createRound, type RoundInstance } from "@/lib/game/createRound";
-import {
-  resolveRound,
-  type RoundResult,
-  type RoundSnapshot,
-} from "@/lib/game/resolution";
+import { resolveRound, type RoundResult, type RoundSnapshot } from "@/lib/game/resolution";
 import {
   HEARTS_TO_WIN,
   RUMOURS_TO_LOSE,
-  type RecipientKey,
+  type ConfidantAction,
   type RouteKey,
+  type Signal,
   type ToneKey,
 } from "@/lib/game/content";
+import { ActionSchema } from "@/lib/game/schema";
 
-/* ---------- Room code generator ---------- */
-const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXY23456789"; // no 0/1/O/I/Z
+const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXY23456789";
+
 function genCode(): string {
   let s = "";
   for (let i = 0; i < 4; i++) s += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
@@ -36,7 +34,7 @@ export async function createRoom(sessionId: string): Promise<{ code: string }> {
       .select("id, code")
       .single();
     if (error) {
-      if (error.code === "23505") continue; // unique violation — try another code
+      if (error.code === "23505") continue;
       throw error;
     }
     await db.from("players").insert({ room_id: room.id, slot: 1, session_id: sessionId });
@@ -50,7 +48,6 @@ export async function joinRoom(code: string, sessionId: string): Promise<{ ok: t
   const { data: room } = await db.from("rooms").select("id, status").eq("code", code).maybeSingle();
   if (!room) return { error: "no_such_room" };
 
-  // If already in this room, return existing slot.
   const { data: existing } = await db
     .from("players")
     .select("slot")
@@ -59,34 +56,23 @@ export async function joinRoom(code: string, sessionId: string): Promise<{ ok: t
     .maybeSingle();
   if (existing) return { ok: true, slot: existing.slot };
 
-  const { data: occupants } = await db
-    .from("players")
-    .select("slot")
-    .eq("room_id", room.id);
+  const { data: occupants } = await db.from("players").select("slot").eq("room_id", room.id);
   if ((occupants?.length ?? 0) >= 2) return { error: "room_full" };
 
   const usedSlots = new Set((occupants ?? []).map((p) => p.slot));
   const slot = usedSlots.has(1) ? 2 : 1;
-  const { error: insErr } = await db
-    .from("players")
-    .insert({ room_id: room.id, slot, session_id: sessionId });
-  if (insErr) throw insErr;
+  const { error: insertError } = await db.from("players").insert({ room_id: room.id, slot, session_id: sessionId });
+  if (insertError) throw insertError;
 
-  // Once two players are present, start the game.
   if ((occupants?.length ?? 0) + 1 === 2 && room.status === "lobby") {
     await startGame(room.id);
   }
   return { ok: true, slot };
 }
 
-/* ---------- Game lifecycle ---------- */
 async function startGame(roomId: string): Promise<void> {
   const db = serverClient();
-  const { data: game } = await db
-    .from("games")
-    .insert({ room_id: roomId })
-    .select("id")
-    .single();
+  const { data: game } = await db.from("games").insert({ room_id: roomId }).select("id").single();
   if (!game) throw new Error("Failed to create game");
   await db.from("rooms").update({ status: "in_game" }).eq("id", roomId);
   await createNextRound(game.id, 1, 1, 0, 0);
@@ -98,28 +84,37 @@ async function createNextRound(
   suitorSlot: number,
   hearts: number,
   rumours: number,
-  recipient?: RecipientKey,
 ): Promise<void> {
   const db = serverClient();
   const seed = Math.floor(Math.random() * 1_000_000);
-  const round: RoundInstance = createRound(seed, { recipient, hearts, rumours });
+  const round: RoundInstance = createRound(seed, { hearts, rumours });
+
   await db.from("rounds").insert({
     game_id: gameId,
     number,
     suitor_slot: suitorSlot,
-    current_phase: "confidant", // confidant goes first
-    recipient: round.recipientKey,
+    current_phase: "confidant",
+    recipient: round.recipientName,
     intention: round.intention,
     routes: round.routes,
+    mood_key: round.moodKey,
+    danger_route: round.dangerRouteKey,
     rival_route: round.rivalRouteKey,
-    rival_trait: round.rivalTraitKey,
     clues: round.clues,
-    confidant_hand: round.confidantHand,
-    suitor_hand: round.suitorHand,
+    signals: [],
+    confidant_action: null,
+    suitor_tone: null,
+    chosen_route: null,
+    result: null,
+    rival_trait: "none",
+    confidant_hand: [],
+    suitor_hand: [],
+    played_cards: [],
+    question: null,
+    suitor_card_played: null,
   });
 }
 
-/* ---------- Action handlers ---------- */
 type ActionResult = { ok: true } | { error: string };
 
 async function loadActiveRound(roomCode: string) {
@@ -158,6 +153,9 @@ export async function handleAction(
   sessionId: string,
   payload: { type: string; [k: string]: unknown },
 ): Promise<ActionResult> {
+  const parsed = ActionSchema.safeParse(payload);
+  if (!parsed.success) return { error: "bad_action" };
+
   const session = await requireSession(code, sessionId);
   if ("error" in session) return session;
 
@@ -168,118 +166,51 @@ export async function handleAction(
 
   const isSuitor = session.slot === round.suitor_slot;
   const isConfidant = !isSuitor;
+  const action = parsed.data;
 
-  switch (payload.type) {
+  switch (action.type) {
     case "confidant_commit": {
       if (!isConfidant) return { error: "wrong_role" };
       if (round.current_phase !== "confidant") return { error: "wrong_phase" };
-      const signals = payload.signals as unknown[];
-      const played = payload.played as unknown[];
       await db
         .from("rounds")
         .update({
-          signals,
-          played_cards: played,
-          current_phase: "tone",
+          signals: action.signals,
+          confidant_action: action.action,
+          current_phase: "suitor",
         })
         .eq("id", round.id);
       return { ok: true };
     }
 
-    case "suitor_tone": {
+    case "suitor_choose": {
       if (!isSuitor) return { error: "wrong_role" };
-      if (round.current_phase !== "tone") return { error: "wrong_phase" };
-      const tone = payload.tone as ToneKey;
-      await db
-        .from("rounds")
-        .update({ suitor_tone: tone, current_phase: "question" })
-        .eq("id", round.id);
-      return { ok: true };
-    }
+      if (round.current_phase !== "suitor") return { error: "wrong_phase" };
 
-    case "ask_question": {
-      if (!isSuitor) return { error: "wrong_role" };
-      if (round.current_phase !== "question") return { error: "wrong_phase" };
-      const route = payload.route as RouteKey;
-      await db
-        .from("rounds")
-        .update({
-          question: { route, answer: null },
-          current_phase: "answer",
-        })
-        .eq("id", round.id);
-      return { ok: true };
-    }
-
-    case "answer_question": {
-      if (!isConfidant) return { error: "wrong_role" };
-      if (round.current_phase !== "answer") return { error: "wrong_phase" };
-      const answer = payload.answer as "Trust" | "Danger" | "Unsure";
-      const q = (round.question ?? {}) as { route?: RouteKey };
-      await db
-        .from("rounds")
-        .update({
-          question: { route: q.route, answer },
-          current_phase: "route",
-        })
-        .eq("id", round.id);
-      return { ok: true };
-    }
-
-    case "skip_question": {
-      if (!isSuitor) return { error: "wrong_role" };
-      if (round.current_phase !== "question") return { error: "wrong_phase" };
-      await db.from("rounds").update({ current_phase: "route" }).eq("id", round.id);
-      return { ok: true };
-    }
-
-    case "choose_route": {
-      if (!isSuitor) return { error: "wrong_role" };
-      if (round.current_phase !== "route") return { error: "wrong_phase" };
-      const chosen = payload.route as RouteKey;
-      const suitorCard = (payload.suitor_card as string | null) ?? null;
-
-      // Apply Confidant card targeting to obstacles
-      const routes = (round.routes as RoundSnapshot["routes"]).map((r) => ({
-        ...r,
-        obstacles: [...r.obstacles],
-      }));
-      for (const p of (round.played_cards as Array<{ key: string; routeTarget: RouteKey | null }>)) {
-        if (!p.routeTarget) continue;
-        const tgt = routes.find((r) => r.key === p.routeTarget);
-        if (!tgt) continue;
-        if (p.key === "distract_guard") tgt.obstacles = tgt.obstacles.filter((o) => o !== "guard");
-        if (p.key === "clear_gossip") tgt.obstacles = tgt.obstacles.filter((o) => o !== "gossip");
-        if (p.key === "find_key") tgt.obstacles = tgt.obstacles.filter((o) => o !== "locked_door");
-        if (p.key === "correct_address") tgt.obstacles = tgt.obstacles.filter((o) => o !== "false_address");
-      }
+      const signals = (round.signals ?? []) as Signal[];
+      const confidantAction = round.confidant_action as ConfidantAction | null;
+      if (!confidantAction) return { error: "missing_confidant_action" };
 
       const snap: RoundSnapshot = {
-        recipientKey: round.recipient as RecipientKey,
-        intention: round.intention,
-        routes,
+        moodKey: round.mood_key as ToneKey,
+        dangerRouteKey: round.danger_route as RouteKey,
         rivalRouteKey: round.rival_route as RouteKey,
-        rivalTraitKey: round.rival_trait as RoundSnapshot["rivalTraitKey"],
-        confidantPlayed: (round.played_cards as Array<{ key: string }>).map((p) => p.key),
-        suitorPlayed: suitorCard as RoundSnapshot["suitorPlayed"],
-        suitorToneKey: round.suitor_tone as ToneKey,
-        suitorChosenRouteKey: chosen,
+        confidantAction,
+        signals,
+        suitorToneKey: action.tone,
+        suitorChosenRouteKey: action.route,
         heartsEarnedSoFar: game.hearts,
         rumoursSoFar: game.rumours,
-        gossipOnRivalRoute: routes
-          .find((rt) => rt.key === round.rival_route)!
-          .obstacles.includes("gossip"),
       };
       const result: RoundResult = resolveRound(snap);
 
       await db
         .from("rounds")
         .update({
-          chosen_route: chosen,
-          suitor_card_played: suitorCard,
+          suitor_tone: action.tone,
+          chosen_route: action.route,
           result,
           current_phase: "resolution",
-          routes,
         })
         .eq("id", round.id);
       return { ok: true };
@@ -287,7 +218,9 @@ export async function handleAction(
 
     case "next_round": {
       if (round.current_phase !== "resolution") return { error: "wrong_phase" };
-      const result = round.result as RoundResult;
+      const result = round.result as RoundResult | null;
+      if (!result) return { error: "missing_result" };
+
       const newHearts = game.hearts + result.heartsDelta;
       const newRumours = game.rumours + result.rumoursDelta;
 
@@ -317,9 +250,6 @@ export async function handleAction(
       await createNextRound(game.id, nextNumber, nextSuitorSlot, newHearts, newRumours);
       return { ok: true };
     }
-
-    default:
-      return { error: "unknown_action" };
   }
 }
 

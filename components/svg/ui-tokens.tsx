@@ -135,14 +135,12 @@ export const TONE_COMPONENTS: Record<ToneKey, ComponentType<ToneGlyphProps>> = {
   tender: ToneTender,
   bold: ToneBold,
   honest: ToneHonest,
-  playful: TonePlayful,
 };
 
-export const TONE_META: Record<ToneKey, { label: string; travelDelta: number; powerDelta: number; hint: string }> = {
-  tender:  { label: "Tender",  travelDelta: +1, powerDelta: +1, hint: "Slower, fonder. Wins ties." },
-  bold:    { label: "Bold",    travelDelta: -1, powerDelta: -1, hint: "Faster, riskier. Loses ties." },
-  honest:  { label: "Honest",  travelDelta:  0, powerDelta:  0, hint: "Cancels Rival's Gossip bonus." },
-  playful: { label: "Playful", travelDelta:  0, powerDelta:  0, hint: "Tie-breaks IF Encouraging Note played." },
+export const TONE_META: Record<ToneKey, { label: string; hint: string }> = {
+  tender: { label: "Tender", hint: "Soft, careful, emotionally open." },
+  bold:   { label: "Bold",   hint: "Direct, brave, hard to ignore." },
+  honest: { label: "Honest", hint: "Plain truth, no ornament, no hiding." },
 };
 
 export const TitleLogo = ({ width = 480 }: { width?: number }) => (

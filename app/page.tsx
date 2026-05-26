@@ -1,193 +1,123 @@
 import Link from "next/link";
-import { TitleLogo, HeartToken, RumourToken, QuestionToken, APPip } from "@/components/svg/ui-tokens";
-import { SIGNAL_COMPONENTS } from "@/components/svg/signals";
+import type { CSSProperties } from "react";
+import { HEARTS_TO_WIN, RUMOURS_TO_LOSE, SIGNAL_TYPES } from "@/lib/game/content";
+import { TitleLogo, HeartToken, RumourToken } from "@/components/svg/ui-tokens";
+import { SIGNAL_COMPONENTS, SIGNAL_META } from "@/components/svg/signals";
+import { assetCssUrl } from "@/src/assets/assetManifest";
 
 export default function HomePage() {
+  const heroStyle = {
+    "--hero-art": assetCssUrl("hero_background") ?? "none",
+  } as CSSProperties;
+
   return (
-    <main style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 28px 100px" }}>
-      <header style={{ textAlign: "center", marginBottom: 56 }}>
-        <TitleLogo width={620} />
-        <p
-          style={{
-            fontFamily: "var(--font-display)",
-            fontStyle: "italic",
-            fontSize: 22,
-            color: "var(--cream)",
-            margin: "20px auto 0",
-            maxWidth: 720,
-            lineHeight: 1.55,
-          }}
-        >
-          A two-player cooperative game of love, rivalry, and indirect communication.
-          One Suitor writes the letter. One Confidant sees the truth of the court and helps in silence.
-          Reach four Hearts before three Rumours undo you.
+    <main className="home">
+      <header className="home-hero" style={heroStyle}>
+        <div className="logo-wrap">
+          <TitleLogo width={560} />
+        </div>
+        <p className="tagline">
+          A two-player cooperative game of romance, rivalry, and symbolic trust.
+          The Confidant knows the truth but can only place two signals. The Suitor reads them,
+          chooses one route and one tone, and hopes the letter survives the court.
+          Reach <strong>{HEARTS_TO_WIN} Hearts</strong> before <strong>{RUMOURS_TO_LOSE} Rumours</strong>.
         </p>
       </header>
 
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: 22,
-          marginBottom: 56,
-        }}
-      >
-        <Tile
-          icon={<HeartToken size={64} />}
-          title="Host a match"
-          body="Open a room and get a four-letter code. Share it. Your partner joins from their own device. Hidden information stays hidden."
-          href="/host"
-          cta="Open a room →"
-          primary
-        />
-        <Tile
-          icon={<QuestionToken size={64} />}
-          title="Join with code"
-          body="A friend has invited you. Enter their four-letter code to enter the court."
-          href="/join"
-          cta="Enter a code →"
-        />
-        <Tile
-          icon={<RumourToken size={64} />}
-          title="Hot-seat (single device)"
-          body="Two players on one screen. Pass the device each phase. Works offline; useful for quick demos."
-          href="/play"
-          cta="Hand the device →"
-        />
-        <Tile
-          icon={<HeartToken size={64} active={false} />}
-          title="Browse the design"
-          body="Every palette token, signal, obstacle, portrait, route, and card on one page."
-          href="/library"
-          cta="Open the library →"
-        />
+      <div className="home-rule">Choose your seat at the court</div>
+
+      <section className="play-modes" aria-label="Play modes">
+        <Link href="/host" className="play-mode play-mode--primary">
+          <div className="pm-icon"><HeartToken size={56} /></div>
+          <div className="pm-eyebrow">Two devices</div>
+          <h3>Host a match</h3>
+          <p>
+            Open a room, get a four-letter code, and share it. Hidden information stays hidden on each screen.
+          </p>
+          <span className="pm-cta">Open a room <span aria-hidden>→</span></span>
+        </Link>
+
+        <Link href="/join" className="play-mode">
+          <div className="pm-icon"><RumourToken size={56} /></div>
+          <div className="pm-eyebrow">Invited</div>
+          <h3>Join with code</h3>
+          <p>A friend has invited you. Enter their four-letter code to enter the court.</p>
+          <span className="pm-cta">Enter a code <span aria-hidden>→</span></span>
+        </Link>
+
+        <Link href="/play" className="play-mode">
+          <div className="pm-icon"><HeartToken size={56} active={false} /></div>
+          <div className="pm-eyebrow">One device</div>
+          <h3>Hot-seat</h3>
+          <p>Pass the device after the Confidant encodes the hidden facts. Best for a first run.</p>
+          <span className="pm-cta">Hand the device <span aria-hidden>→</span></span>
+        </Link>
       </section>
 
-      <section
-        style={{
-          padding: 28,
-          border: "1px solid rgba(201,163,95,0.2)",
-          background: "rgba(14, 19, 38, 0.4)",
-        }}
-      >
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 28,
-            margin: "0 0 16px",
-            color: "var(--cream)",
-            letterSpacing: "0.04em",
-          }}
-        >
-          The vocabulary at a glance
-        </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-            gap: 18,
-          }}
-        >
-          {(Object.entries(SIGNAL_COMPONENTS) as [keyof typeof SIGNAL_COMPONENTS, (typeof SIGNAL_COMPONENTS)[keyof typeof SIGNAL_COMPONENTS]][]).map(([k, Sig]) => (
-            <div key={k} style={{ textAlign: "center" }}>
-              <Sig size={64} />
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  marginTop: 6,
-                  color: "var(--cream)",
-                  fontSize: 16,
-                  letterSpacing: "0.04em",
-                  textTransform: "capitalize",
-                }}
-              >
-                {k}
-              </div>
-            </div>
-          ))}
-          <div style={{ textAlign: "center" }}>
-            <APPip size={64} />
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                marginTop: 6,
-                color: "var(--cream)",
-                fontSize: 16,
-                letterSpacing: "0.04em",
-              }}
-            >
-              AP
-            </div>
+      <section className="how-section" aria-label="How to play">
+        <div className="section-head">
+          <h2>First time at court?</h2>
+          <Link href="/rules" className="head-meta" style={{ textDecoration: "none" }}>
+            Read the full rules →
+          </Link>
+        </div>
+
+        <div className="how-steps">
+          <div className="how-step">
+            <div className="num">i.</div>
+            <h4>Two roles</h4>
+            <p>
+              The Confidant sees the mood, danger route, and Rival route. The Suitor does not.
+            </p>
+          </div>
+          <div className="how-step">
+            <div className="num">ii.</div>
+            <h4>Two signals</h4>
+            <p>
+              Heart, Thorn, Clock, and Mask are the whole language. Signals guide interpretation but never resolve the round alone.
+            </p>
+          </div>
+          <div className="how-step">
+            <div className="num">iii.</div>
+            <h4>One token</h4>
+            <p>
+              The Suitor chooses a route and tone. Resolution reveals the hidden facts and awards one Heart or one Rumour.
+            </p>
           </div>
         </div>
-        <p
-          style={{
-            fontFamily: "var(--font-display)",
-            fontStyle: "italic",
-            color: "var(--cream-shadow)",
-            textAlign: "center",
-            marginTop: 24,
-          }}
-        >
-          — Court Silence is in force. —
-        </p>
+
+        <div className="how-foot">
+          <p>
+            Court Silence is in force: the Confidant cannot speak, gesture, or write anything outside the two signals.
+          </p>
+          <Link href="/rules" className="btn">Read the rules</Link>
+        </div>
       </section>
+
+      <section className="vocab-band" aria-label="Signal vocabulary">
+        <div className="section-head" style={{ borderBottom: "none", marginBottom: 18, paddingBottom: 0 }}>
+          <h2 style={{ fontSize: 24 }}>The four silent signals</h2>
+          <span className="head-meta">2 per round</span>
+        </div>
+        <div className="vocab-row">
+          {SIGNAL_TYPES.map((key) => {
+            const Sig = SIGNAL_COMPONENTS[key];
+            return (
+              <div key={key} className="vocab-cell">
+                <Sig size={56} />
+                <div className="vocab-name">{SIGNAL_META[key].label}</div>
+                <div className="vocab-hint">{SIGNAL_META[key].hint}</div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <footer className="home-foot">
+        <Link href="/library" className="foot-link">Browse the design library</Link>
+        <span className="silence">Court Silence is in force.</span>
+        <Link href="/rules" className="foot-link">How to play</Link>
+      </footer>
     </main>
   );
 }
-
-const Tile = ({
-  icon,
-  title,
-  body,
-  href,
-  cta,
-  primary = false,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-  primary?: boolean;
-}) => (
-  <Link
-    href={href}
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: 12,
-      padding: 26,
-      background: primary ? "rgba(110, 31, 46, 0.22)" : "rgba(43, 19, 46, 0.28)",
-      border: `1px solid ${primary ? "rgba(233, 196, 122, 0.45)" : "rgba(201, 163, 95, 0.2)"}`,
-      textDecoration: "none",
-      color: "var(--cream)",
-      transition: "all 200ms ease",
-    }}
-  >
-    <div>{icon}</div>
-    <h3
-      style={{
-        fontFamily: "var(--font-display)",
-        fontSize: 26,
-        margin: "4px 0 0",
-        color: "var(--gold-bright)",
-        letterSpacing: "0.02em",
-      }}
-    >
-      {title}
-    </h3>
-    <p style={{ margin: 0, color: "var(--cream)", lineHeight: 1.55, fontSize: 14 }}>{body}</p>
-    <span
-      style={{
-        marginTop: "auto",
-        fontSize: 12,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color: "var(--gold-bright)",
-      }}
-    >
-      {cta}
-    </span>
-  </Link>
-);

@@ -6,8 +6,7 @@ import { HeartToken, RumourToken } from "@/components/svg/ui-tokens";
 const HEART_BEATS = [
   { at: 1, text: "The first letter arrives. The recipient smiles, alone, in a corner of the gallery." },
   { at: 2, text: "A ribbon is returned with no message. It is the answer." },
-  { at: 3, text: "Word travels through the kitchens — quietly, fondly — that the Suitor is not what the court assumed." },
-  { at: 4, text: "At the masquerade, the recipient leaves the dance to find them. The court understands. The court approves." },
+  { at: 3, text: "At the masquerade, the recipient leaves the dance to find them. The court understands. The court approves." },
 ];
 
 const RUMOUR_BEATS = [
@@ -19,7 +18,7 @@ const RUMOUR_BEATS = [
 type Props = {
   hearts: number;
   rumours: number;
-  lastOutcome: "success" | "fail" | "fail_blocking";
+  lastOutcome: "success" | "fail";
   nextRoundNumber: number;
   onContinue: () => void;
   onExit: () => void;
@@ -86,12 +85,12 @@ export const InterroundView = ({ hearts, rumours, lastOutcome, nextRoundNumber, 
             marginBottom: 24,
           }}
         >
-          The next round begins. Roles will rotate.
+          The next round begins. Roles rotate.
         </p>
         <div className="splash-controls">
-          <button className="btn btn-ghost" onClick={onExit}>← Exit</button>
+          <button className="btn btn-ghost" onClick={onExit}>Exit</button>
           <button className="btn btn-primary" onClick={onContinue}>
-            Begin round {nextRoundNumber} →
+            Begin round {nextRoundNumber}
           </button>
         </div>
       </div>

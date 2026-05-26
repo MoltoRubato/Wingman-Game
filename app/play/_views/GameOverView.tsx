@@ -72,8 +72,8 @@ export const GameOverView = ({ won, hearts, rumours, onPlayAgain, onExit }: Prop
         </div>
       </div>
       <div className="splash-controls">
-        <button className="btn btn-ghost" onClick={onExit}>← Exit</button>
-        <button className="btn btn-primary" onClick={onPlayAgain}>Play another match →</button>
+        <button className="btn btn-ghost" onClick={onExit}>Exit</button>
+        <button className="btn btn-primary" onClick={onPlayAgain}>Play another match</button>
       </div>
     </div>
   </div>

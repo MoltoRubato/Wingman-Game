@@ -1,5 +1,5 @@
 /**
- * Shared SVG <defs> — painterly filters, gradients, textures.
+ * Shared SVG <defs> - painterly filters, gradients, textures.
  * Mount once in app/layout.tsx. Every SVG asset references these by id.
  */
 

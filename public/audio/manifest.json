@@ -1,7 +1,7 @@
 {
   "$schema": "./audio-manifest.schema.json",
-  "_comment": "Per build plan §9.9. All from Freesound / Pixabay / Zapsplat — CC0 preferred. Load via Howler or native Audio; ambient loops at 0.4 gain, stings at 0.7, ui at 0.6 by default.",
-  "version": 1,
+  "_comment": "Optional audio cue plan for the simplified Rival Hearts flow.",
+  "version": 2,
   "defaults": {
     "format": ["ogg", "mp3"],
     "preload": "metadata",
@@ -10,117 +10,80 @@
   },
   "buses": {
     "ambient": { "gain": 0.4, "ducksUnder": ["sting"] },
-    "ui":      { "gain": 0.6 },
-    "feedback":{ "gain": 0.75 },
-    "sting":   { "gain": 0.85 }
+    "ui": { "gain": 0.6 },
+    "feedback": { "gain": 0.75 },
+    "sting": { "gain": 0.85 }
   },
   "cues": [
     {
-      "id":     "ambient_court",
-      "trigger":"phase:enter[tone_choice|confidant_phase|question_phase|route_choice]",
-      "bus":    "ambient",
-      "loop":   true,
+      "id": "ambient_court",
+      "trigger": "phase:enter[confidant|suitor]",
+      "bus": "ambient",
+      "loop": true,
       "fadeIn": 1200,
-      "fadeOut":800,
-      "style":  "Solo harp + distant murmur of voices",
+      "fadeOut": 800,
+      "style": "Solo harp with distant court murmur",
       "length": "60s loop",
-      "files":  ["assets/audio/ambient_court.ogg", "assets/audio/ambient_court.mp3"],
-      "sources":["freesound:harp-suite-cc0", "freesound:court-murmur-cc0"]
+      "files": ["assets/audio/ambient_court.ogg", "assets/audio/ambient_court.mp3"]
     },
     {
-      "id":     "letter_slide",
-      "trigger":"event:card_draw, event:card_play",
-      "bus":    "ui",
-      "loop":   false,
-      "style":  "Paper sliding on velvet",
-      "length": "400ms",
-      "files":  ["assets/audio/letter_slide.ogg", "assets/audio/letter_slide.mp3"]
-    },
-    {
-      "id":     "seal_stamp",
-      "trigger":"event:signal_placed, event:tone_chosen",
-      "bus":    "ui",
-      "loop":   false,
-      "style":  "Wax press + soft thud",
+      "id": "seal_stamp",
+      "trigger": "event:signal_placed, event:tone_chosen",
+      "bus": "ui",
+      "loop": false,
+      "style": "Wax press with soft thud",
       "length": "350ms",
-      "files":  ["assets/audio/seal_stamp.ogg", "assets/audio/seal_stamp.mp3"]
+      "files": ["assets/audio/seal_stamp.ogg", "assets/audio/seal_stamp.mp3"]
     },
     {
-      "id":     "whisper_gossip",
-      "trigger":"event:rumour_earned",
-      "bus":    "feedback",
-      "loop":   false,
-      "style":  "Layered close whispers, indistinct",
+      "id": "whisper_gossip",
+      "trigger": "event:rumour_earned",
+      "bus": "feedback",
+      "loop": false,
+      "style": "Layered close whispers, indistinct",
       "length": "1.2s",
-      "files":  ["assets/audio/whisper_gossip.ogg", "assets/audio/whisper_gossip.mp3"]
+      "files": ["assets/audio/whisper_gossip.ogg", "assets/audio/whisper_gossip.mp3"]
     },
     {
-      "id":     "harp_success",
-      "trigger":"event:heart_earned",
-      "bus":    "feedback",
-      "loop":   false,
-      "style":  "Rising harp arpeggio, single bell at peak",
+      "id": "harp_success",
+      "trigger": "event:heart_earned",
+      "bus": "feedback",
+      "loop": false,
+      "style": "Rising harp arpeggio, single bell at peak",
       "length": "2.5s",
-      "files":  ["assets/audio/harp_success.ogg", "assets/audio/harp_success.mp3"]
+      "files": ["assets/audio/harp_success.ogg", "assets/audio/harp_success.mp3"]
     },
     {
-      "id":     "tense_sting",
-      "trigger":"event:rival_reveal",
-      "bus":    "sting",
-      "loop":   false,
-      "style":  "Low strings + struck metal",
+      "id": "tense_sting",
+      "trigger": "event:reveal_hidden_facts",
+      "bus": "sting",
+      "loop": false,
+      "style": "Low strings with struck metal",
       "length": "1.8s",
-      "files":  ["assets/audio/tense_sting.ogg", "assets/audio/tense_sting.mp3"]
+      "files": ["assets/audio/tense_sting.ogg", "assets/audio/tense_sting.mp3"]
     },
     {
-      "id":     "door_lock",
-      "trigger":"event:obstacle_revealed[locked_door]",
-      "bus":    "feedback",
-      "loop":   false,
-      "style":  "Heavy iron tumbler",
-      "length": "600ms",
-      "files":  ["assets/audio/door_lock.ogg", "assets/audio/door_lock.mp3"]
-    },
-    {
-      "id":     "footsteps_rival",
-      "trigger":"animation:rival_path",
-      "bus":    "feedback",
-      "loop":   true,
-      "fadeIn": 200,
-      "fadeOut":300,
-      "style":  "Boots on stone, slight echo",
-      "length": "3.0s loop"
-    },
-    {
-      "id":     "quill_write",
-      "trigger":"event:tone_chosen, event:question_asked",
-      "bus":    "ui",
-      "loop":   false,
-      "style":  "Quill scratch on paper",
-      "length": "700ms"
-    },
-    {
-      "id":     "chime_phase",
-      "trigger":"phase:transition",
-      "bus":    "ui",
-      "loop":   false,
-      "style":  "Soft tuned chime",
+      "id": "chime_phase",
+      "trigger": "phase:transition",
+      "bus": "ui",
+      "loop": false,
+      "style": "Soft tuned chime",
       "length": "500ms"
     },
     {
-      "id":     "defeat_sting",
-      "trigger":"event:gameover[lost]",
-      "bus":    "sting",
-      "loop":   false,
-      "style":  "Descending strings, single broken-glass shimmer",
+      "id": "defeat_sting",
+      "trigger": "event:gameover[lost]",
+      "bus": "sting",
+      "loop": false,
+      "style": "Descending strings with glass shimmer",
       "length": "3.0s"
     },
     {
-      "id":     "victory_sting",
-      "trigger":"event:gameover[won]",
-      "bus":    "sting",
-      "loop":   false,
-      "style":  "Full chamber ensemble cadence, dovetailed harp",
+      "id": "victory_sting",
+      "trigger": "event:gameover[won]",
+      "bus": "sting",
+      "loop": false,
+      "style": "Full chamber ensemble cadence",
       "length": "4.0s"
     }
   ]

@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Server-side Supabase client using the service role key. Bypasses RLS.
- * Only used from API routes — never imported into client code.
+ * Only used from API routes - never imported into client code.
  */
 let cached: SupabaseClient | null = null;
 

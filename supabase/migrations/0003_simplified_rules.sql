@@ -1,77 +1,26 @@
--- Rival Hearts schema. Server-authoritative; clients never SELECT directly.
+alter table rounds add column if not exists mood_key text;
+alter table rounds add column if not exists danger_route text;
+alter table rounds add column if not exists confidant_action text;
 
-create extension if not exists "pgcrypto";
+update rounds
+set
+  mood_key = coalesce(mood_key, suitor_tone, 'tender'),
+  danger_route = coalesce(danger_route, 'fast'),
+  confidant_action = confidant_action
+where mood_key is null or danger_route is null;
 
-create table if not exists rooms (
-  id          uuid primary key default gen_random_uuid(),
-  code        text unique not null check (code ~ '^[A-HJ-NP-Y2-9]{4}$'),
-  status      text not null default 'lobby',
-  created_at  timestamptz not null default now(),
-  expires_at  timestamptz not null default (now() + interval '24 hours')
-);
+alter table rounds alter column mood_key set default 'tender';
+alter table rounds alter column danger_route set default 'fast';
 
-create table if not exists players (
-  id          uuid primary key default gen_random_uuid(),
-  room_id     uuid not null references rooms(id) on delete cascade,
-  slot        int not null check (slot in (1, 2)),
-  session_id  uuid not null,
-  joined_at   timestamptz not null default now(),
-  unique (room_id, slot),
-  unique (room_id, session_id)
-);
-
-create table if not exists games (
-  id            uuid primary key default gen_random_uuid(),
-  room_id       uuid not null unique references rooms(id) on delete cascade,
-  hearts        int not null default 0,
-  rumours       int not null default 0,
-  round_number  int not null default 1,
-  status        text not null default 'active',
-  created_at    timestamptz not null default now()
-);
-
-create table if not exists rounds (
-  id              uuid primary key default gen_random_uuid(),
-  game_id         uuid not null references games(id) on delete cascade,
-  number          int not null,
-  suitor_slot     int not null check (suitor_slot in (1, 2)),
-  current_phase   text not null,
-  recipient       text not null,
-  intention       text not null,
-  routes          jsonb not null,
-  mood_key        text not null,
-  danger_route    text not null,
-  rival_route     text not null,
-  confidant_action text,
-  clues           jsonb not null default '[]'::jsonb,
-  signals         jsonb not null default '[]'::jsonb,
-  suitor_tone     text,
-  chosen_route    text,
-  result          jsonb,
-  -- Retired columns kept nullable for compatibility with older local data.
-  rival_trait     text,
-  confidant_hand  jsonb not null default '[]'::jsonb,
-  suitor_hand     jsonb not null default '[]'::jsonb,
-  played_cards    jsonb not null default '[]'::jsonb,
-  question        jsonb,
-  suitor_card_played text,
-  created_at      timestamptz not null default now(),
-  unique (game_id, number)
-);
-
-create index if not exists rooms_code_idx on rooms (code);
-create index if not exists players_room_idx on players (room_id);
-create index if not exists rounds_game_idx on rounds (game_id, number desc);
-
-alter table rooms enable row level security;
-alter table players enable row level security;
-alter table games enable row level security;
-alter table rounds enable row level security;
-
-alter publication supabase_realtime add table rooms;
-alter publication supabase_realtime add table players;
-alter publication supabase_realtime add table games;
-alter publication supabase_realtime add table rounds;
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'rounds' and column_name = 'rival_trait'
+  ) then
+    alter table rounds alter column rival_trait drop not null;
+  end if;
+end $$;
 
 create or replace function get_room_view(p_code text, p_session_id uuid)
 returns jsonb

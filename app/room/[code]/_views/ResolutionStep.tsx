@@ -12,16 +12,10 @@ type Props = {
 export const ResolutionStep = ({ view, onContinue }: Props) => {
   const result = getResult(view);
   if (!result) return null;
-  const round = adaptResolutionRound(view);
-  const narrative =
-    result.outcome === "success"
-      ? "The Suitor finds the right corner of the gallery, at the right moment."
-      : "A fan opens. A name is mouthed behind it.";
   return (
     <ResolutionView
-      round={round}
+      round={adaptResolutionRound(view)}
       result={result}
-      narrative={narrative}
       onContinue={onContinue}
       onReplay={onContinue}
     />

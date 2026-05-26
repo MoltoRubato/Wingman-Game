@@ -12,7 +12,7 @@ const RouteBase = ({ children, w = 768, h = 384 }: BaseProps) => (
   </svg>
 );
 
-/* Deterministic variance — same seed → same value, so SSR & client agree. */
+/* Deterministic variance - same seed → same value, so SSR & client agree. */
 const variance = (i: number) => Math.abs(Math.sin(i * 9301 + 49297));
 
 export const RouteGarden = (p: RouteProps) => (
@@ -218,13 +218,13 @@ const withAIRoute = (key: RouteKey, SvgFallback: ComponentType<RouteProps>): Com
 };
 
 export const ROUTE_COMPONENTS: Record<RouteKey, ComponentType<RouteProps>> = {
-  garden:   withAIRoute("garden",   RouteGarden),
-  gallery:  withAIRoute("gallery",  RouteGallery),
-  corridor: withAIRoute("corridor", RouteCorridor),
+  fast:   withAIRoute("fast", RouteGarden),
+  safe:   withAIRoute("safe", RouteGallery),
+  secret: withAIRoute("secret", RouteCorridor),
 };
 
-export const ROUTE_META: Record<RouteKey, { label: string; baseTime: number; mood: string }> = {
-  garden:   { label: "Garden Walk",         baseTime: 3, mood: "romantic but exposed" },
-  gallery:  { label: "Portrait Gallery",    baseTime: 4, mood: "watched, formal" },
-  corridor: { label: "Servants' Corridor",  baseTime: 5, mood: "secret, slow, intimate" },
+export const ROUTE_META: Record<RouteKey, { label: string; hint: string; artSource: string }> = {
+  fast:   { label: "Fast Route",   hint: "Shortest path, easiest to rush, hardest to read.", artSource: "garden" },
+  safe:   { label: "Safe Route",   hint: "Public path, steady pace, often the obvious choice.", artSource: "gallery" },
+  secret: { label: "Secret Route", hint: "Hidden path, tempting when the court is watching.", artSource: "corridor" },
 };

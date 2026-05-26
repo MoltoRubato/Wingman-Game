@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { TitleLogo } from "@/components/svg/ui-tokens";
-import { PORTRAITS } from "@/components/svg/portraits";
 import Link from "next/link";
 
 type Props = {
@@ -65,35 +64,17 @@ export const Lobby = ({ code, selfSlot, players }: Props) => {
             : "Share the code with your partner. They can join from the home page → Join match. As soon as they arrive, the game begins."}
         </p>
         <div style={{ display: "flex", justifyContent: "center", gap: 24, margin: "18px 0 24px", flexWrap: "wrap" }}>
-          {players.map((p) => {
-            const Portrait = p.slot === 1 ? PORTRAITS.suitor : PORTRAITS.confidant;
-            return (
-              <div key={p.slot} style={{ textAlign: "center" }}>
-                <Portrait w={160} h={200} />
-                <div className="eyebrow" style={{ marginTop: 8 }}>
-                  Slot {p.slot} — {p.slot === selfSlot ? "you" : "your partner"}
-                </div>
+          {players.map((p) => (
+            <div key={p.slot} className="seat-token">
+              <div className="seat-token-num">{p.slot}</div>
+              <div className="eyebrow" style={{ marginTop: 8 }}>
+                Slot {p.slot} - {p.slot === selfSlot ? "you" : "your partner"}
               </div>
-            );
-          })}
+            </div>
+          ))}
           {!partnerHere && (
-            <div style={{ textAlign: "center", opacity: 0.4 }}>
-              <div
-                style={{
-                  width: 160,
-                  height: 200,
-                  border: "1px dashed rgba(201,163,95,0.4)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: "var(--font-display)",
-                  fontStyle: "italic",
-                  color: "var(--cream-shadow)",
-                  fontSize: 18,
-                }}
-              >
-                Awaiting…
-              </div>
+            <div className="seat-token seat-token--empty">
+              <div className="seat-token-num">?</div>
               <div className="eyebrow" style={{ marginTop: 8 }}>Empty seat</div>
             </div>
           )}

@@ -74,60 +74,21 @@ export default function RoomPage({ params }: { params: Params }) {
     case "confidant":
       body = isSuitor ? (
         <WaitingFor title="The Confidant is choosing in silence">
-          Three private clues are being weighed. Signals will appear on the routes when they hand the letter to you.
+          Hidden facts are being weighed. Two signals will appear when they hand the letter to you.
         </WaitingFor>
       ) : (
         <ConfidantStep view={view} onCommit={(c) => fire({ type: "confidant_commit", ...c })} />
       );
       break;
-    case "tone":
+    case "suitor":
       body = isSuitor ? (
         <SuitorStep
           view={view}
-          subphase="tone"
-          onSubmitTone={(tone) => fire({ type: "suitor_tone", tone })}
+          onChoose={(choice) => fire({ type: "suitor_choose", ...choice })}
         />
       ) : (
-        <WaitingFor title="The Suitor is choosing a tone">
-          They have seen your signals. They are deciding how to write the letter.
-        </WaitingFor>
-      );
-      break;
-    case "question":
-      body = isSuitor ? (
-        <SuitorStep
-          view={view}
-          subphase="question"
-          onAskQuestion={(route) => fire({ type: "ask_question", route })}
-          onSkipQuestion={() => fire({ type: "skip_question" })}
-        />
-      ) : (
-        <WaitingFor title="The Suitor may ask one question">
-          They have one Question Token. They may use it or skip it.
-        </WaitingFor>
-      );
-      break;
-    case "answer":
-      body = isSuitor ? (
-        <WaitingFor title="Your Confidant is answering">
-          One word only: Trust, Danger, or Unsure.
-        </WaitingFor>
-      ) : (
-        <ConfidantStep view={view} awaitingQuestion onAnswer={(answer) => fire({ type: "answer_question", answer })} />
-      );
-      break;
-    case "route":
-      body = isSuitor ? (
-        <SuitorStep
-          view={view}
-          subphase="route"
-          onChooseRoute={(route, suitorCard) =>
-            fire({ type: "choose_route", route, suitor_card: suitorCard })
-          }
-        />
-      ) : (
-        <WaitingFor title="The Suitor is sending the letter">
-          Their choice will reveal everything.
+        <WaitingFor title="The Suitor is reading your signals">
+          They are choosing one route and one tone. Their choice will reveal everything.
         </WaitingFor>
       );
       break;

@@ -3,6 +3,7 @@ import type { SignalType } from "@/lib/game/content";
 
 export type SignalProps = { size?: number; glow?: boolean };
 type BaseProps = SignalProps & { children?: ReactNode };
+const stableCoord = (n: number) => Number(n.toFixed(4));
 
 const SignalBase = ({ size = 128, children, glow = false }: BaseProps) => (
   <svg viewBox="0 0 256 256" width={size} height={size} style={{ display: "block" }}>
@@ -67,9 +68,10 @@ export const SignalClock = (p: SignalProps) => (
     <circle cx="128" cy="134" r="56" fill="none" stroke="#5e4519" strokeWidth="1" />
     {Array.from({ length: 12 }).map((_, i) => {
       const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
-      const x1 = 128 + Math.cos(a) * 54, y1 = 134 + Math.sin(a) * 54;
-      const x2 = 128 + Math.cos(a) * (i % 3 === 0 ? 46 : 50);
-      const y2 = 134 + Math.sin(a) * (i % 3 === 0 ? 46 : 50);
+      const x1 = stableCoord(128 + Math.cos(a) * 54);
+      const y1 = stableCoord(134 + Math.sin(a) * 54);
+      const x2 = stableCoord(128 + Math.cos(a) * (i % 3 === 0 ? 46 : 50));
+      const y2 = stableCoord(134 + Math.sin(a) * (i % 3 === 0 ? 46 : 50));
       return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#c9a35f" strokeWidth={i % 3 === 0 ? 2.5 : 1.5} strokeLinecap="round" />;
     })}
     <line x1="128" y1="134" x2="120" y2="92" stroke="#f1d68d" strokeWidth="3.5" strokeLinecap="round" />
@@ -111,17 +113,13 @@ export const SignalKey = (p: SignalProps) => (
 export const SIGNAL_COMPONENTS: Record<SignalType, ComponentType<SignalProps>> = {
   heart: SignalHeart,
   thorn: SignalThorn,
-  eye:   SignalEye,
   clock: SignalClock,
   mask:  SignalMask,
-  key:   SignalKey,
 };
 
 export const SIGNAL_META: Record<SignalType, { label: string; hint: string }> = {
-  heart: { label: "Heart", hint: "Trust / recipient favours" },
-  thorn: { label: "Thorn", hint: "Caution / a hidden danger" },
-  eye:   { label: "Eye",   hint: "Watched / rival presence" },
-  clock: { label: "Clock", hint: "Time matters / shortcut" },
-  mask:  { label: "Mask",  hint: "Deception / change identity" },
-  key:   { label: "Key",   hint: "Solution / unlocks route" },
+  heart: { label: "Heart", hint: "Good choice or fitting tone" },
+  thorn: { label: "Thorn", hint: "Danger" },
+  clock: { label: "Clock", hint: "Timing or speed" },
+  mask:  { label: "Mask",  hint: "Deception or Rival" },
 };
